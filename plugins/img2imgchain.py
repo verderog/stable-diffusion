@@ -10,6 +10,9 @@ from ldm.dream.promptformatter import PromptFormatter
 from plugins._dreamplugin import DreamPlugin
 import argparse
 
+import random
+import sys
+
 plugin_class_name="Img2ImgChain"  # TODO - figure out a robust way to automate class name retrieval
 
 class Img2ImgChain(DreamPlugin):
@@ -33,6 +36,8 @@ class Img2ImgChain(DreamPlugin):
         super().__init__(initial_switches)
         
         print(str(initial_switches))
+        
+        self.random = random.SystemRandom() # not sure why, but noticing repeated random seeds so use the SystemRandom() method to enforce randomness.
         
         # process plug-in specific args
         self.plg_parser = self.plugin_parser()
@@ -70,5 +75,5 @@ class Img2ImgChain(DreamPlugin):
         self.dream_opt.init_img = opt.outputfile
 
         if self.dream_opt.seed: # ensure a new seed is generated
-            self.dream_opt.seed=None
+            self.dream_opt.seed=self.random.randint(0,999999999)
     
