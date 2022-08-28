@@ -390,7 +390,10 @@ def write_log_message(t2i, prompt, results, logfile, plugin=None):
         print(log_message)
         
         if plugin:
-            plugin.process_dream_output(shlex.split(f'{prompt} -S{seed} --outputfile {r[0]}'))
+            try:
+                plugin.process_dream_output(shlex.split(f'{prompt} -S{seed} --outputfile {r[0]}'))
+            except Exception as e:
+                print("Plugin exception: " + str(e))
         logfile.write(log_message + '\n')
         logfile.flush()
 

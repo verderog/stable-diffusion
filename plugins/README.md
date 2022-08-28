@@ -25,6 +25,8 @@ results for an iteration.  These results are in the form of a
 Python list.  This method may be called once or multiple times depending
 on the switches passed to plugin.
 
+Note: previous
+
 ## Invocation
 
 From the 'dream>' console, call the plugin using the `--plugin` option
@@ -35,4 +37,14 @@ and include any config and image parameters as desired.  Example:
 For this plugin example, the standard parameters `-W` and `-H` will be passed by the plugin
 to the "dream>" prompt, and the plugin will use the `cs_*` switches to sweep the
 cfg_scale from 8.0 -> 10.0 in 0.5 increments.
+
+## Creating new plugins
+
+- Copy the `plugins._template.py` to `plugins/` with the plugin name.
+- Update the `plugin_class_name` line and name of the class
+- Update the `__init__`, `get_dream_prompt`, and `process_dream_output` methods
+- Define a custom `plugin_parser` method for any unique options the plugin requires
+- Execute new plugin via the "dream>" console. Example: `dream> black dragon, flying -S 123456 --plugin plugins.my_shiny_new_plugin`
+
+Since plugins are loaded dynamically at run-time, they can be updated without have to restart `dream.py`.
 

@@ -21,7 +21,7 @@ plugin_class_name="IterateCfgScale" # TODO - figure out a robust way to automate
 class IterateCfgScale(DreamPlugin):
     def plugin_parser(self):
         parser = argparse.ArgumentParser(
-            description='Example: dragon -plugin .plugins.iteratecfgscale --cs_start 7.5 --cs_stop 10.0 --cs_step 0.5'
+            description='Example: dragon --plugin .plugins.iteratecfgscale --cs_start 7.5 --cs_stop 10.0 --cs_step 0.5'
         )
         parser.add_argument('--cs_start', type=float, help='config scale start',default=7.5)
         parser.add_argument('--cs_stop', type=float, help='config scale stop',default=10.5)

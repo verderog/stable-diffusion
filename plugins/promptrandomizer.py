@@ -29,7 +29,7 @@ plugin_class_name="PromptRandomizer" # TODO - figure out a robust way to automat
 class PromptRandomizer(DreamPlugin):
     def plugin_parser(self):
         parser = argparse.ArgumentParser(
-            description='Example: an elephant walking on {} another planet {} -S 385838583 -count 10'
+            description='Example: an elephant walking on {} another planet {} -S 385838583 --count 10 --plugin plugins.promptrandomizer'
         )
         parser.add_argument('--count', type=int, help='number of images to generate',default=1)
         return parser
