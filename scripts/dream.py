@@ -8,7 +8,12 @@ import sys
 import copy
 import warnings
 import ldm.dream.readline
-from ldm.dream.pngwriter import PngWriter, PromptFormatter
+
+import importlib
+import plugins._dreamplugin
+
+from ldm.dream.pngwriter import PngWriter
+from ldm.dream.promptformatter import PromptFormatter
 
 debugging = False
 
@@ -126,11 +131,23 @@ def main():
 def main_loop(t2i, outdir, parser, log, infile):
     """prompt/read/execute loop"""
     done = False
+    plugin=None
+    module=None
     last_seeds = []
 
     while not done:
         try:
-            command = infile.readline() if infile else input('dream> ')
+            if plugin:
+                try:
+                    command = plugin.get_dream_prompt()
+                    print("plugin> " + command)
+                except Exception as e:
+                    print("Exception:" + str(e))
+                    print("Terminating plugin...")
+                    plugin = None
+                    continue
+            else:
+                command = infile.readline() if infile else input('dream> ')
         except EOFError:
             done = True
             break
@@ -154,6 +171,15 @@ def main_loop(t2i, outdir, parser, log, infile):
 
         if len(elements) == 0:
             continue
+        
+        if elements[0] == '--debug':
+            continue
+        
+        if elements[0] == '--terminate-plugin':
+            if plugin:
+                print("Terminating plugin...")
+                plugin = None
+                continue
 
         if elements[0] == 'q':
             done = True
@@ -190,8 +216,50 @@ def main_loop(t2i, outdir, parser, log, infile):
                 switches[0] += ' '
         switches[0] = switches[0][: len(switches[0]) - 1]
 
+        if '--plugin' in switches:
+            ind = switches.index('--plugin') 
+            if (ind + 1) < len(switches):
+                plugin_name=switches[ind + 1] 
+                print("Loading plugin: " + plugin_name)
+
+                try:
+                    if plugin_name in sys.modules:
+                        print("Reloading module...")
+                        importlib.reload(module)
+                    else:
+                        print("Dynamically loading module...")
+                        module=importlib.import_module(plugin_name)
+                    
+                    # remove the plugin invocation switches from the command passed to the plugin
+                    del switches[ind:ind+2]
+                    
+                    # prep the plugin input before handing things off.  This will encapsulate the prompt and auto-fill expected options
+                    opt_t = parser.parse_known_args(switches)
+                    plugin_launch_str = PromptFormatter(t2i, opt_t[0]).normalize_prompt() + ' '
+                    plugin_launch_str += ' '.join(opt_t[1]) # include unrecognized options that may be plugin-specific
+
+                    plugin_class_name=getattr(module,"plugin_class_name")
+                    # attempt to instantiate plugin class with initial switches
+                    class_=getattr(module,plugin_class_name)
+                    plugin=class_(shlex.split(plugin_launch_str))
+
+                except  Exception as e:
+                    print("Problem launching plugin")
+                    print(str(e))
+                    print("Aborted!")
+                    plugin = None
+                    continue
+            else:
+                print("Command ignored")
+            continue
+
+
         try:
-            opt = parser.parse_args(switches)
+            # Allow "unknown" args which might actually be t2i-related args
+            opt_t = parser.parse_known_args(switches)
+            opt=opt_t[0]
+            if opt_t[1]:
+                print("Ignored: " + str(opt_t[1]))
         except SystemExit:
             parser.print_help()
             continue
@@ -239,7 +307,7 @@ def main_loop(t2i, outdir, parser, log, infile):
             continue
 
         print('Outputs:')
-        write_log_message(t2i, normalized_prompt, results, log)
+        write_log_message(t2i, normalized_prompt, results, log, plugin)
 
     print('goodbye!')
 
@@ -309,7 +377,7 @@ def load_gfpgan_bg_upsampler(bg_upsampler, bg_tile=400):
 #     return variants
 
 
-def write_log_message(t2i, prompt, results, logfile):
+def write_log_message(t2i, prompt, results, logfile, plugin=None):
     """logs the name of the output image, its prompt and seed to the terminal, log file, and a Dream text chunk in the PNG metadata"""
     last_seed = None
     img_num = 1
@@ -320,6 +388,9 @@ def write_log_message(t2i, prompt, results, logfile):
         log_message = f'{r[0]}: {prompt} -S{seed}'
 
         print(log_message)
+        
+        if plugin:
+            plugin.process_dream_output(shlex.split(f'{prompt} -S{seed} --outputfile {r[0]}'))
         logfile.write(log_message + '\n')
         logfile.flush()
 
