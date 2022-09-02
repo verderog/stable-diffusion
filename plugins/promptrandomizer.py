@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 '''
-This example plug-in demonstrates how to generate prompts that have randomized portions associated with them.  '*' portions
+This example plug-in demonstrates how to generate prompts that have randomized portions associated with them.  '{}' portions
 of the text will be replaced by random values. 
 
 Example invocation:
 
-dream> an elephant walking on {} another planet {} -S 385838583 -count 10 --plugin plugins.promptrandomizer
+dream> an elephant walking on {} another planet {} -S 385838583 --count 10 --plugin plugins.promptrandomizer
 
 Plugin specific options:
 

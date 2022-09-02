@@ -244,9 +244,9 @@ def main_loop(t2i, outdir, parser, log, infile):
                     plugin=class_(shlex.split(plugin_launch_str))
 
                 except  Exception as e:
-                    print("Problem launching plugin")
+                    print("Exception detected.")
                     print(str(e))
-                    print("Aborted!")
+                    print("Terminated!")
                     plugin = None
                     continue
             else:

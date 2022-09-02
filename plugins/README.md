@@ -40,8 +40,8 @@ cfg_scale from 8.0 -> 10.0 in 0.5 increments.
 
 ## Creating new plugins
 
-- Copy the `plugins._template.py` to `plugins/` with the plugin name.
-- Update the `plugin_class_name` line and name of the class
+- Copy the `plugins._template.py` to `plugins/` with the new plugin name.
+- Update the `plugin_class_name` line with the name of the class
 - Update the `__init__`, `get_dream_prompt`, and `process_dream_output` methods
 - Define a custom `plugin_parser` method for any unique options the plugin requires
 - Execute new plugin via the "dream>" console. Example: `dream> black dragon, flying -S 123456 --plugin plugins.my_shiny_new_plugin`
