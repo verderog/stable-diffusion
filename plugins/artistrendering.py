@@ -14,6 +14,7 @@ from ldm.dream.promptformatter import PromptFormatter
 from plugins._dreamplugin import DreamPlugin
 import argparse
 from pathlib import Path
+import random
 
 plugin_class_name="ArtistRenderingPlugin"  # TODO - figure out a robust way to automate class name retrieval
 
@@ -23,8 +24,8 @@ class ArtistRenderingPlugin(DreamPlugin):
         parser = argparse.ArgumentParser(
             description='Example: a beautiful elf princess, ethereal face. Painted by {} --plugin plugins.artistrendering'
         )
-        parser.add_argument('--maxartists', type=int, help='maximum number of artists to process',default=None)
         parser.add_argument('--outputfile', type=str, help='Internal switch for parsing dream output results')
+        parser.add_argument('--random', type=int, help='Use prompt against <N> random artists', default=None)
         parser.add_argument('--phelp', action="store_true")
         return parser
 
@@ -43,19 +44,21 @@ class ArtistRenderingPlugin(DreamPlugin):
         opt=opt_t[0] # only grab known parms
         
         self.artistlist = []
+        self.randartistlist=[]
         # create array from the artistlist
         with open('plugins/artistlist.txt', 'r') as fd:
             for line in fd:
                 self.artistlist.append(line.strip())
-
-        # if user is limiting the number of artists to process...
-        if opt.maxartists:
-            # then do so...
-            self.maxartists = opt.maxartists
-        else:
-            # else just let everything through
-            self.maxartists = len(self.artistlist)
             
+        if opt.random and opt.random < len(self.artistlist):
+            for _ in range(0,opt.random):
+                artist = self.artistlist.pop(random.randint(0,len(self.artistlist)))
+                print(f"Queue'ing random artist: {artist}") 
+                self.randartistlist.append(artist)
+            self.artistlist.clear() # using the random list, so clear out the full list
+        else:
+            print(f"*** Sampling all {len(self.artistlist)} artists! ***")
+
         if opt.phelp:
             self.plg_parser.print_help()
         
@@ -67,19 +70,19 @@ class ArtistRenderingPlugin(DreamPlugin):
         self.dream_opt=opt
         self.default_seed = self.dream_opt.seed
                 
-        self.pos = 0
         self.currentartist=''
     
     def get_dream_prompt(self):
-        if (self.pos < len(self.artistlist)) and (self.pos < self.maxartists):
-            self.currentartist=self.artistlist[self.pos]
-            self.dream_opt.prompt = self.prompt_baseline.format(self.currentartist) # populate the random fields
-            self.pos += 1
-            command_str = PromptFormatter(opt=self.dream_opt).normalize_prompt() # tee things up for when the dream console is ready for more input
-            return command_str
+        if len(self.randartistlist) > 0:
+            self.currentartist = self.randartistlist.pop(0)
+        elif len(self.artistlist) > 0:
+            self.currentartist = self.artistlist.pop(0)
         else:
             return "--terminate-plugin"
         
+        self.dream_opt.prompt = self.prompt_baseline.format(self.currentartist) # populate the random fields
+        command_str = PromptFormatter(opt=self.dream_opt).normalize_prompt() # tee things up for when the dream console is ready for more input
+        return command_str
     
     def process_dream_output(self,output_list):
         opt_t = self.cmd_parser.parse_known_args(output_list)

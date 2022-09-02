@@ -14,6 +14,7 @@ import plugins._dreamplugin
 
 from ldm.dream.pngwriter import PngWriter
 from ldm.dream.promptformatter import PromptFormatter
+from numba.core.types import none
 
 debugging = False
 
@@ -308,6 +309,10 @@ def main_loop(t2i, outdir, parser, log, infile):
 
         print('Outputs:')
         write_log_message(t2i, normalized_prompt, results, log, plugin)
+        if len(results) == 0:
+            if plugin:
+                print("Terminating plugin due to no output produced...")
+                plugin = None
 
     print('goodbye!')
 
